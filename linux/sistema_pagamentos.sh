@@ -1,15 +1,55 @@
 #!/bin/bash
-# Arquivo de pedidos
+#Arquivo de pedidos
 DB="pedidos.txt"
 
-# Garante que o arquivo existe
+#Garante que o arquivo existe
 touch "$DB"
-# Fazer uma função para pedir o produtoe só depois registrar o status do pagamento
+
+registrar_produto() {
+    while true; do
+        echo "Selecione um Produto: "
+        echo "1. Carregador"
+        echo "2. Cabo"
+        echo "3. Capinha"
+        echo "4. Película"
+        echo "5. Fone"
+        read -p "Escolha um item: " item
+
+        case "$item" in
+            1)
+                produto="Carregador"
+                break
+                ;;
+            2)
+                produto="Cabo"
+                break
+                ;;
+            3)
+                produto="Capinha"
+                break
+                ;;
+            4)
+                produto="Película"
+                break
+                ;;
+            5)
+                produto="Fone"
+                break
+                ;;
+            *)
+                echo "Opção inválida!"
+                ;;
+        esac
+    done
+}
+
 registrar_pagamento() {
+    registrar_produto
     read -p "Número do pedido: " pedido
     data=$(date)
-    echo "$pedido|PAGO|$data|AGUARDANDO_ENTREGA" >> "$DB"
+    echo "$pedido|$produto|PAGO|$data|AGUARDANDO_ENTREGA" >> "$DB"
     echo "Nota fiscal emitida para o pedido $pedido."
+    echo "Produto: $produto"
     echo "Status: PAGO"
     echo "Data: $data"
 }
@@ -18,17 +58,18 @@ iniciar_entrega() {
     read -p "Número do pedido: " pedido
 
     if grep -q "^$pedido|" "$DB"; then
-        sed -i "s/^$pedido|PAGO|.*|AGUARDANDO_ENTREGA/$pedido|PAGO|$(date)|EM_ENTREGA/" "$DB"
+        produto=$(grep "^$pedido|" "$DB" | cut -d'|' -f2)
+        sed -i "s/^$pedido|$produto|PAGO|.*|AGUARDANDO_ENTREGA/$pedido|$produto|PAGO|$(date)|EM_ENTREGA/" "$DB"
         read -p "Tempo de entrega estimado (em segundos): " tempo
 
         echo "Pedido $pedido saiu para entrega!"
-        while (( "$tempo" > 0 )) ; do
+        while (( tempo > 0 )); do
             echo "Tempo restante: $tempo segundos"
             sleep 1
             ((tempo--))
         done
 
-        sed -i "s/^$pedido|PAGO|.*|EM_ENTREGA/$pedido|PAGO|$(date)|ENTREGUE/" "$DB"
+        sed -i "s/^$pedido|$produto|PAGO|.*|EM_ENTREGA/$pedido|$produto|PAGO|$(date)|ENTREGUE/" "$DB"
         echo "Pedido $pedido ENTREGUE!"
     else
         echo "Pedido não encontrado!"
@@ -48,23 +89,28 @@ ver_status() {
 while true; do
     echo ""
     echo "==== MENU DE OPÇÕES ===="
-    echo "1. Registrar pagamento"
-    echo "2. Iniciar entrega"
-    echo "3. Ver status de pedidos"
-    echo "4. Sair"
+    echo "1. Registrar produto"
+    echo "2. Registrar pagamento"
+    echo "3. Iniciar entrega"
+    echo "4. Ver status de pedidos"
+    echo "5. Sair"
     read -p "Escolha uma opção: " opcao
 
     case "$opcao" in
         1)
-            registrar_pagamento
+            registrar_produto
+            echo "Produto registrado: $produto"
             ;;
         2)
-            iniciar_entrega
+            registrar_pagamento
             ;;
         3)
-            ver_status
+            iniciar_entrega
             ;;
         4)
+            ver_status
+            ;;
+        5)
             echo "Saindo..."
             break
             ;;
