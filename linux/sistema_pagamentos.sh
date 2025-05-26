@@ -5,7 +5,7 @@ DB="pedidos.txt"
 #Garante que o arquivo existe
 touch "$DB"
 
-registrar_produto() {
+registrar_produto() { #seleciona o produto
     while true; do
         echo "Selecione um Produto: "
         echo "1. Carregador"
@@ -43,7 +43,7 @@ registrar_produto() {
     done
 }
 
-registrar_pagamento() {
+registrar_pagamento() { #registra o produto
     registrar_produto
     read -p "Número do pedido: " pedido
     data=$(date)
@@ -54,7 +54,7 @@ registrar_pagamento() {
     echo "Data: $data"
 }
 
-iniciar_entrega() {
+iniciar_entrega() { #inicia a entrega do produto com base no número do pedido 
     read -p "Número do pedido: " pedido
 
     if grep -q "^$pedido|" "$DB"; then
@@ -76,13 +76,27 @@ iniciar_entrega() {
     fi
 }
 
-ver_status() {
+ver_status() { #Lista todos os pedidos
     echo "=== STATUS DOS PEDIDOS ==="
 
     if [ -s "$DB" ]; then
         column -t -s '|' "$DB"
     else
         echo "Nenhum pedido registrado."
+    fi
+}
+
+deletar_produto() {
+    ver_status #Lista os pedidos
+    read -p "Digite o número do pedido que deseja cancelar: " pedido
+    
+    if grep -q "^$pedido|" "$DB"; then
+
+        grep -v "^$pediddo|" "$DB" > "$DB.temp"
+        mv "$DB.temp" "$DB"
+        echo "Pedido cancelado com sucesso!"
+    else 
+        echo "Pedido não encontrado, selecione um número válido!"
     fi
 }
 
@@ -93,7 +107,8 @@ while true; do
     echo "2. Registrar pagamento"
     echo "3. Iniciar entrega"
     echo "4. Ver status de pedidos"
-    echo "5. Sair"
+    echo "5. Deletar produto"
+    echo "6. Sair"
     read -p "Escolha uma opção: " opcao
 
     case "$opcao" in
@@ -111,7 +126,10 @@ while true; do
             ver_status
             ;;
         5)
-            echo "Saindo..."
+            deletar_produto
+            ;;
+        6) 
+            Sair
             break
             ;;
         *)
